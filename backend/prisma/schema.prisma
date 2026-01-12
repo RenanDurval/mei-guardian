@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  whatsapp  String?
+  plan      String   @default("FREE") // FREE, PRO, ENTERPRISE
+  createdAt DateTime @default(now())
+  
+  cnpjs     Cnpj[]
+}
+
+model Cnpj {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  cnpj            String   @unique
+  legalName       String?  // Razão Social
+  tradeName       String?  // Nome Fantasia
+  status          String   @default("ACTIVE") // ACTIVE, SUSPENDED, BLOCKED, DOWN
+  lastCheck       DateTime @default(now())
+  
+  dasList         Das[]
+  invoices        Invoice[]
+}
+
+model Das {
+  id           String   @id @default(uuid())
+  cnpjId       String
+  cnpj         Cnpj     @relation(fields: [cnpjId], references: [id])
+  month        Int
+  year         Int
+  amount       Float
+  dueDate      DateTime
+  status       String   @default("PENDING") // PENDING, PAID, OVERDUE
+  barcode      String?
+  
+  createdAt    DateTime @default(now())
+}
+
+model Invoice {
+  id           String   @id @default(uuid())
+  cnpjId       String
+  cnpj         Cnpj     @relation(fields: [cnpjId], references: [id])
+  clientName   String
+  clientDoc    String?
+  amount       Float
+  description  String
+  issuedAt     DateTime @default(now())
+  pdfUrl       String?
+  
+  createdAt    DateTime @default(now())
+}
